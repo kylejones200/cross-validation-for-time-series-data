@@ -1,13 +1,45 @@
-# Cross Validation for Time Series Data
+# Cross-Validation for Time Series Data
 
-**Published:** 2025-01-17
-**Medium:** [https://medium.com/@kyle-t-jones/cross-validation-for-time-series-data-51fd11c38e2b](https://medium.com/@kyle-t-jones/cross-validation-for-time-series-data-51fd11c38e2b)
+This project demonstrates various cross-validation strategies for time series data, including time series splits, rolling windows, nested CV, and blocking methods.
 
-## About
+## Article
 
-Place the code for this article in this repository.
-The original article export is saved as `article.md`.
+Medium article: [Cross-Validation for Time Series Data](https://medium.com/@kylejones_47003/cross-validation-for-time-series-data-51fd11c38e2b)
 
-## Files
+## Project Structure
 
-Add your `.ipynb`, `.py`, `.yaml`, `.js`, `.ts`, or other project files here.
+```
+.
+├── README.md           # This file
+├── main.py            # Main entry point
+├── config.yaml        # Configuration file
+├── requirements.txt   # Python dependencies
+├── src/               # Core functions
+│   ├── core.py        # Cross-validation classes
+│   └── plotting.py    # Tufte-style plotting utilities
+├── tests/             # Unit tests
+├── data/              # Data files (if needed)
+└── images/            # Generated plots and figures
+```
+
+## Configuration
+
+Edit `config.yaml` to customize:
+- Data source and column names
+- Cross-validation parameters (n_splits, window_size, block_size)
+- Which CV methods to run
+- Analysis options
+
+## Available CV Methods
+
+- **TimeSeriesCV**: Standard time series cross-validation splits
+- **RollingWindowCV**: Rolling window approach
+- **NestedTimeSeriesCV**: Nested CV for hyperparameter tuning
+- **BlockingTimeSeriesCV**: Block-based CV
+- **TimeSeriesEvaluation**: Custom metrics evaluation
+
+## Caveats
+
+- Time series CV preserves temporal ordering (no shuffling).
+- Data leakage checks verify that training data comes before test data.
+- Rolling window CV can be computationally expensive for large datasets.
