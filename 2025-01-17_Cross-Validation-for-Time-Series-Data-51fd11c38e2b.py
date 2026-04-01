@@ -33,7 +33,7 @@ class RollingWindowCV:
         self.window_size = window_size
         self.step_size = step_size
 
-def split(self, data):
+    def split(self, data):
         """Generate rolling window splits"""
         n_samples = len(data)
         indices = np.arange(n_samples)
@@ -72,7 +72,7 @@ class NestedTimeSeriesCV:
         self.n_splits_outer = n_splits_outer
         self.n_splits_inner = n_splits_inner
 
-def run_nested_cv(self, model, param_grid, X, y):
+    def run_nested_cv(self, model, param_grid, X, y):
         """Perform nested cross-validation"""
         from sklearn.model_selection import ParameterGrid
         from sklearn.metrics import mean_squared_error
@@ -116,7 +116,7 @@ class BlockingTimeSeriesCV:
         self.block_size = block_size
         self.n_splits = n_splits
 
-def split(self, data):
+    def split(self, data):
         """Generate blocked splits"""
         n_samples = len(data)
         n_blocks = n_samples // self.block_size
@@ -134,7 +134,7 @@ class PurgedCV:
     def __init__(self, embargo_size=0):
         self.embargo_size = embargo_size
 
-def split(self, data, events):
+    def split(self, data, events):
         """Generate purged and embargoed cross-validation splits"""
         events = events.sort_index()
         unique_dates = events.index.unique()
@@ -159,7 +159,7 @@ class TimeSeriesEvaluation:
     def __init__(self):
         self.metrics = {}
 
-def add_metric(self, name, function):
+    def add_metric(self, name, function):
         """Add custom evaluation metric"""
         self.metrics[name] = function
     def evaluate(self, y_true, y_pred):
@@ -187,7 +187,7 @@ def check_temporal_dependencies(data, max_lag=10):
     """Check for temporal dependencies in the data"""
     from statsmodels.tsa.stattools import acf
 
-acf_values = acf(data, nlags=max_lag)
+    acf_values = acf(data, nlags=max_lag)
     return acf_values
 
 def check_data_leakage(train_indices, test_indices, timestamps):
