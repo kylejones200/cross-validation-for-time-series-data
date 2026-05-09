@@ -53,26 +53,26 @@ def main():
     if args.data_path and args.data_path.exists():
         df = pd.read_csv(args.data_path, parse_dates=[config['data']['date_column']])
     else:
-                df = generate_example_data()
+        df = generate_example_data()
     
     date_col = config['data']['date_column']
     target_col = config['data']['target_column']
     
     if config['cross_validation']['time_series_cv']['enabled']:
-                tscv = TimeSeriesCV(df, date_col, target_col)
+            tscv = TimeSeriesCV(df, date_col, target_col)
             config['cross_validation']['time_series_cv']['n_splits'],
             output_dir / 'time_series_cv_splits.png'
         )
     
     if config['analysis']['check_temporal_dependencies']:
-                acf_vals = check_temporal_dependencies(
+            acf_vals = check_temporal_dependencies(
             df[target_col],
             config['analysis']['max_lag']
         )
         logging.info(f"ACF values (first 5 lags): {acf_vals[:5]}")
     
     if config['analysis']['check_data_leakage']:
-                from sklearn.model_selection import TimeSeriesSplit
+            from sklearn.model_selection import TimeSeriesSplit
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
         tscv = TimeSeriesSplit(n_splits=3)
