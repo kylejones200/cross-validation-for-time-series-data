@@ -16,36 +16,37 @@ logging.basicConfig(level=logging.INFO, format='%(message)s')
 class TimeSeriesCV:
     """Time series cross-validation splitter."""
     
-    def __init__(self, data: pd.DataFrame, date_column: str, target_column: str):
+    def __init__(self, data: pd.DataFrame, date_column: str, target_column: str, plot: bool = False):
         self.data = data
         self.date_column = date_column
         self.target_column = target_column
 
         """Plot time series cross-validation splits."""
         tscv = TimeSeriesSplit(n_splits=n_splits)
-        fig, axs = plt.subplots(n_splits, 1, figsize=(15, 5 * n_splits))
+        if plot:
+            fig, axs = plt.subplots(n_splits, 1, figsize=(15, 5 * n_splits))
         
-        if n_splits == 1:
-            axs = [axs]
+            if n_splits == 1:
+                axs = [axs]
         
-        for idx, (train_idx, test_idx) in enumerate(tscv.split(self.data)):
-            train_data = self.data.iloc[train_idx]
-            test_data = self.data.iloc[test_idx]
+            for idx, (train_idx, test_idx) in enumerate(tscv.split(self.data)):
+                train_data = self.data.iloc[train_idx]
+                test_data = self.data.iloc[test_idx]
             
-            axs[idx].plot(train_data[self.date_column], train_data[self.target_column],
-                         label='Training', color="#4A90A4", linewidth=1.2)
-            axs[idx].plot(test_data[self.date_column], test_data[self.target_column],
-                         label='Validation', color="#D4A574", linewidth=1.2)
-            axs[idx].legend(loc='best')
+                axs[idx].plot(train_data[self.date_column], train_data[self.target_column],
+                             label='Training', color="#4A90A4", linewidth=1.2)
+                axs[idx].plot(test_data[self.date_column], test_data[self.target_column],
+                             label='Validation', color="#D4A574", linewidth=1.2)
+                axs[idx].legend(loc='best')
         
-        plt.suptitle("Time Series Cross-Validation Splits", fontsize=12, y=0.98, color='0.2')
+            plt.suptitle("Time Series Cross-Validation Splits", fontsize=12, y=0.98, color='0.2')
         
-        if output_path:
-            plt.savefig(output_path, dpi=100, bbox_inches="tight")
-            plt.close()
-        else:
-            plt.tight_layout()
-            plt.show()
+            if output_path:
+                plt.savefig(output_path, dpi=100, bbox_inches="tight")
+                plt.close()
+            else:
+                plt.tight_layout()
+                plt.show()
         
         return fig
 
