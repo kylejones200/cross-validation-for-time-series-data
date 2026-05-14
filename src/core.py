@@ -127,7 +127,7 @@ class NestedTimeSeriesCV:
                     model.fit(X_train_inner, y_train_inner)
                     pred = model.predict(X_test_inner)
                     score = mean_squared_error(y_test_inner, pred)
-                    inner_scores.append(score)
+                    pd.concat([inner_scores, score])
                 
                 avg_score = np.mean(inner_scores)
                 if avg_score < best_score:
@@ -138,8 +138,8 @@ class NestedTimeSeriesCV:
             model.fit(X_train_outer, y_train_outer)
             pred = model.predict(X_test_outer)
             score = mean_squared_error(y_test_outer, pred)
-            outer_scores.append(score)
-            best_params.append(best_param)
+            pd.concat([outer_scores, score])
+            pd.concat([best_params, best_param])
         
         return outer_scores, best_params
 
