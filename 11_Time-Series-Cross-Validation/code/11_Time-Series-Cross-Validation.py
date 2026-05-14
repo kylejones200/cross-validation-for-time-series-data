@@ -224,11 +224,8 @@ plt.tight_layout()
 plt.savefig('cv_comparison.png', dpi=300, bbox_inches='tight')
 plt.show()
 
-logger.info("\n" + "="*60)
-logger.info("CROSS-VALIDATION METHOD COMPARISON")
-logger.info("="*60)
+logger.info("=== CROSS-VALIDATION METHOD COMPARISON ===")
 logger.info(f"{'Method':<20} {'Average MAE':<15}")
-logger.info("-"*60)
 for method, mae in results.items():
     logger.info(f"{method:<20} {mae:<15.2f}")
 
