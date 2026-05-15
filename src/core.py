@@ -2,8 +2,7 @@
 
 import numpy as np
 import pandas as pd
-from pathlib import Path
-from typing import Dict, Any, Iterator, List, Tuple, Optional
+from typing import Any, Iterator
 from sklearn.model_selection import TimeSeriesSplit, ParameterGrid
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from statsmodels.tsa.stattools import acf
@@ -57,7 +56,7 @@ class RollingWindowCV:
         self.window_size = window_size
         self.step_size = step_size
 
-    def split(self, data: pd.DataFrame) -> Iterator[Tuple[np.ndarray, np.ndarray]]:
+    def split(self, data: pd.DataFrame) -> Iterator[tuple[np.ndarray, np.ndarray]]:
         """Generate train/test splits using rolling window."""
         n_samples = len(data)
         indices = np.arange(n_samples)
@@ -84,7 +83,7 @@ class RollingWindowCV:
         return scores, predictions
 
     @staticmethod
-    def _calculate_metrics(y_true: pd.Series, y_pred: np.ndarray) -> Dict[str, float]:
+    def _calculate_metrics(y_true: pd.Series, y_pred: np.ndarray) -> dict[str, float]:
         """Calculate evaluation metrics."""
         return {
             'mse': mean_squared_error(y_true, y_pred),
@@ -99,7 +98,7 @@ class NestedTimeSeriesCV:
         self.n_splits_outer = n_splits_outer
         self.n_splits_inner = n_splits_inner
 
-    def run_nested_cv(self, model: Any, param_grid: Dict, X: pd.DataFrame, y: pd.Series):
+    def run_nested_cv(self, model: Any, param_grid: dict, X: pd.DataFrame, y: pd.Series):
         """Run nested cross-validation with hyperparameter tuning."""
         outer_cv = TimeSeriesSplit(n_splits=self.n_splits_outer)
         inner_cv = TimeSeriesSplit(n_splits=self.n_splits_inner)
@@ -150,7 +149,7 @@ class BlockingTimeSeriesCV:
         self.block_size = block_size
         self.n_splits = n_splits
 
-    def split(self, data: pd.DataFrame) -> Iterator[Tuple[np.ndarray, np.ndarray]]:
+    def split(self, data: pd.DataFrame) -> Iterator[tuple[np.ndarray, np.ndarray]]:
         """Generate train/test splits using blocks."""
         n_samples = len(data)
         n_blocks = n_samples // self.block_size
@@ -175,7 +174,7 @@ class TimeSeriesEvaluation:
         """Add a custom evaluation metric."""
         self.metrics[name] = function
 
-    def evaluate(self, y_true: pd.Series, y_pred: np.ndarray) -> Dict[str, float]:
+    def evaluate(self, y_true: pd.Series, y_pred: np.ndarray) -> dict[str, float]:
         """Evaluate predictions using all registered metrics."""
         results = {}
         for name, function in self.metrics.items():
@@ -184,7 +183,7 @@ class TimeSeriesEvaluation:
 
     def cross_validate(self, model: Any, cv_splitter: Any, X: pd.DataFrame, y: pd.Series):
         """Perform cross-validation with custom metrics."""
-        cv_results = {name: [] for name in self.metrics.keys()}
+        cv_results = {name: [] for name in self.metrics}
         for train_idx, test_idx in cv_splitter.split(X):
             X_train = X.iloc[train_idx]
             X_test = X.iloc[test_idx]

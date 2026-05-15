@@ -138,7 +138,7 @@ class PurgedCV:
         """Generate purged and embargoed cross-validation splits"""
         events = events.sort_index()
         unique_dates = events.index.unique()
-        n_splits = len(unique_dates)
+        len(unique_dates)
         for test_date in unique_dates:
             test_indices = events.index == test_date
             train_indices = self._get_train_indices(events, test_date, self.embargo_size)
@@ -170,7 +170,7 @@ class TimeSeriesEvaluation:
         return results
     def cross_validate(self, model, cv_splitter, X, y):
         """Perform cross-validation with multiple metrics"""
-        cv_results = {name: [] for name in self.metrics.keys()}
+        cv_results = {name: [] for name in self.metrics}
         for train_idx, test_idx in cv_splitter.split(X):
             X_train = X.iloc[train_idx]
             X_test = X.iloc[test_idx]

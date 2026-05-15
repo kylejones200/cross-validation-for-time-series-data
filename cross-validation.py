@@ -139,7 +139,7 @@ class TimeSeriesEvaluation:
         return results
 
     def cross_validate(self, model, cv_splitter, X, y):
-        cv_results = {name: [] for name in self.metrics.keys()}
+        cv_results = {name: [] for name in self.metrics}
         for train_idx, test_idx in cv_splitter.split(X):
             X_train = X.iloc[train_idx]
             X_test = X.iloc[test_idx]
