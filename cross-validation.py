@@ -1,15 +1,17 @@
 # Creating the full Python script with all cross-validation classes and utilities from the article
 
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from sklearn.model_selection import TimeSeriesSplit, ParameterGrid
-from sklearn.metrics import mean_squared_error, mean_absolute_error
-from statsmodels.tsa.stattools import acf
 import logging
 
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.model_selection import ParameterGrid, TimeSeriesSplit
+from statsmodels.tsa.stattools import acf
+
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(message)s')
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+
 
 class TimeSeriesCV:
     def __init__(self, data, date_column, target_column):
@@ -22,12 +24,21 @@ class TimeSeriesCV:
         for idx, (train_idx, test_idx) in enumerate(tscv.split(self.data)):
             train_data = self.data.iloc[train_idx]
             test_data = self.data.iloc[test_idx]
-            axs[idx].plot(train_data[self.date_column], train_data[self.target_column], label='Training')
-            axs[idx].plot(test_data[self.date_column], test_data[self.target_column], label='Validation')
-            axs[idx].set_title(f'Split {idx + 1}')
+            axs[idx].plot(
+                train_data[self.date_column],
+                train_data[self.target_column],
+                label="Training",
+            )
+            axs[idx].plot(
+                test_data[self.date_column],
+                test_data[self.target_column],
+                label="Validation",
+            )
+            axs[idx].set_title(f"Split {idx + 1}")
             axs[idx].legend()
         plt.tight_layout()
         return fig
+
 
 class RollingWindowCV:
     def __init__(self, window_size, step_size=1):
@@ -41,7 +52,7 @@ class RollingWindowCV:
             end_idx = start_idx + self.window_size
             if end_idx + self.step_size <= n_samples:
                 train_idx = indices[start_idx:end_idx]
-                test_idx = indices[end_idx:end_idx + self.step_size]
+                test_idx = indices[end_idx : end_idx + self.step_size]
                 yield train_idx, test_idx
 
     def evaluate_model(self, model, data, target):
@@ -61,10 +72,11 @@ class RollingWindowCV:
     @staticmethod
     def _calculate_metrics(y_true, y_pred):
         return {
-            'mse': mean_squared_error(y_true, y_pred),
-            'mae': mean_absolute_error(y_true, y_pred),
-            'rmse': np.sqrt(mean_squared_error(y_true, y_pred))
+            "mse": mean_squared_error(y_true, y_pred),
+            "mae": mean_absolute_error(y_true, y_pred),
+            "rmse": np.sqrt(mean_squared_error(y_true, y_pred)),
         }
+
 
 class NestedTimeSeriesCV:
     def __init__(self, n_splits_outer=5, n_splits_inner=3):
@@ -81,7 +93,7 @@ class NestedTimeSeriesCV:
             X_test_outer = X.iloc[outer_test_idx]
             y_train_outer = y.iloc[outer_train_idx]
             y_test_outer = y.iloc[outer_test_idx]
-            best_score = float('inf')
+            best_score = float("inf")
             best_param = None
             for params in ParameterGrid(param_grid):
                 inner_scores = []
@@ -107,6 +119,7 @@ class NestedTimeSeriesCV:
             pd.concat([best_params, best_param])
         return outer_scores, best_params
 
+
 class BlockingTimeSeriesCV:
     def __init__(self, block_size, n_splits=5):
         self.block_size = block_size
@@ -116,14 +129,15 @@ class BlockingTimeSeriesCV:
         n_samples = len(data)
         n_blocks = n_samples // self.block_size
         indices = np.arange(n_samples)
-        blocks = np.array_split(indices[:n_blocks * self.block_size], n_blocks)
+        blocks = np.array_split(indices[: n_blocks * self.block_size], n_blocks)
         for i in range(self.n_splits):
             test_block_idx = i % n_blocks
             test_indices = blocks[test_block_idx]
-            train_indices = np.concatenate([
-                block for j, block in enumerate(blocks) if j != test_block_idx
-            ])
+            train_indices = np.concatenate(
+                [block for j, block in enumerate(blocks) if j != test_block_idx]
+            )
             yield train_indices, test_indices
+
 
 class TimeSeriesEvaluation:
     def __init__(self):
@@ -152,8 +166,10 @@ class TimeSeriesEvaluation:
                 cv_results[name].append(value)
         return {name: np.mean(scores) for name, scores in cv_results.items()}
 
+
 def check_temporal_dependencies(data, max_lag=10):
     return acf(data, nlags=max_lag)
+
 
 def check_data_leakage(train_indices, test_indices, timestamps):
     train_dates = timestamps[train_indices]

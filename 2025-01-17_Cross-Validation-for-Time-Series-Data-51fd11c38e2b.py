@@ -1,12 +1,11 @@
 # Description: Short example for Cross Validation for Time Series Data.
 
 
-
-
-from sklearn.model_selection import TimeSeriesSplit
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import TimeSeriesSplit
+
 
 class TimeSeriesCV:
     def __init__(self, data, date_column, target_column):
@@ -21,12 +20,21 @@ class TimeSeriesCV:
         for idx, (train_idx, test_idx) in enumerate(tscv.split(self.data)):
             train_data = self.data.iloc[train_idx]
             test_data = self.data.iloc[test_idx]
-            axs[idx].plot(train_data[self.date_column], train_data[self.target_column], label='Training')
-            axs[idx].plot(test_data[self.date_column], test_data[self.target_column], label='Validation')
-            axs[idx].set_title(f'Split {idx + 1}')
+            axs[idx].plot(
+                train_data[self.date_column],
+                train_data[self.target_column],
+                label="Training",
+            )
+            axs[idx].plot(
+                test_data[self.date_column],
+                test_data[self.target_column],
+                label="Validation",
+            )
+            axs[idx].set_title(f"Split {idx + 1}")
             axs[idx].legend()
         plt.tight_layout()
         return fig
+
 
 class RollingWindowCV:
     def __init__(self, window_size, step_size=1):
@@ -41,8 +49,9 @@ class RollingWindowCV:
             end_idx = start_idx + self.window_size
             if end_idx + self.step_size <= n_samples:
                 train_idx = indices[start_idx:end_idx]
-                test_idx = indices[end_idx:end_idx + self.step_size]
+                test_idx = indices[end_idx : end_idx + self.step_size]
                 yield train_idx, test_idx
+
     def evaluate_model(self, model, data, target):
         """Evaluate model using rolling window CV"""
         scores = []
@@ -57,15 +66,18 @@ class RollingWindowCV:
             scores.append(self._calculate_metrics(y_test, pred))
             predictions.extend(pred)
         return scores, predictions
+
     @staticmethod
     def _calculate_metrics(y_true, y_pred):
         """Calculate evaluation metrics"""
-        from sklearn.metrics import mean_squared_error, mean_absolute_error
+        from sklearn.metrics import mean_absolute_error, mean_squared_error
+
         return {
-            'mse': mean_squared_error(y_true, y_pred),
-            'mae': mean_absolute_error(y_true, y_pred),
-            'rmse': np.sqrt(mean_squared_error(y_true, y_pred))
+            "mse": mean_squared_error(y_true, y_pred),
+            "mae": mean_absolute_error(y_true, y_pred),
+            "rmse": np.sqrt(mean_squared_error(y_true, y_pred)),
         }
+
 
 class NestedTimeSeriesCV:
     def __init__(self, n_splits_outer=5, n_splits_inner=3):
@@ -74,8 +86,9 @@ class NestedTimeSeriesCV:
 
     def run_nested_cv(self, model, param_grid, X, y):
         """Perform nested cross-validation"""
-        from sklearn.model_selection import ParameterGrid
         from sklearn.metrics import mean_squared_error
+        from sklearn.model_selection import ParameterGrid
+
         outer_cv = TimeSeriesSplit(n_splits=self.n_splits_outer)
         inner_cv = TimeSeriesSplit(n_splits=self.n_splits_inner)
         outer_scores = []
@@ -85,7 +98,7 @@ class NestedTimeSeriesCV:
             X_test_outer = X.iloc[outer_test_idx]
             y_train_outer = y.iloc[outer_train_idx]
             y_test_outer = y.iloc[outer_test_idx]
-            best_score = float('inf')
+            best_score = float("inf")
             best_param = None
             for params in ParameterGrid(param_grid):
                 inner_scores = []
@@ -111,6 +124,7 @@ class NestedTimeSeriesCV:
             pd.concat([best_params, best_param])
         return outer_scores, best_params
 
+
 class BlockingTimeSeriesCV:
     def __init__(self, block_size, n_splits=5):
         self.block_size = block_size
@@ -121,14 +135,15 @@ class BlockingTimeSeriesCV:
         n_samples = len(data)
         n_blocks = n_samples // self.block_size
         indices = np.arange(n_samples)
-        blocks = np.array_split(indices[:n_blocks * self.block_size], n_blocks)
+        blocks = np.array_split(indices[: n_blocks * self.block_size], n_blocks)
         for i in range(self.n_splits):
             test_block_idx = i % n_blocks
             test_indices = blocks[test_block_idx]
-            train_indices = np.concatenate([
-                block for j, block in enumerate(blocks) if j != test_block_idx
-            ])
+            train_indices = np.concatenate(
+                [block for j, block in enumerate(blocks) if j != test_block_idx]
+            )
             yield train_indices, test_indices
+
 
 class PurgedCV:
     def __init__(self, embargo_size=0):
@@ -141,19 +156,21 @@ class PurgedCV:
         len(unique_dates)
         for test_date in unique_dates:
             test_indices = events.index == test_date
-            train_indices = self._get_train_indices(events, test_date, self.embargo_size)
+            train_indices = self._get_train_indices(
+                events, test_date, self.embargo_size
+            )
             yield train_indices, test_indices
+
     @staticmethod
     def _get_train_indices(events, test_date, embargo_size):
         train_indices = events.index != test_date
         if embargo_size > 0:
             embargo_dates = pd.date_range(
-                start=test_date,
-                periods=embargo_size + 1,
-                freq=events.index.freq
+                start=test_date, periods=embargo_size + 1, freq=events.index.freq
             )
             train_indices &= ~events.index.isin(embargo_dates)
         return train_indices
+
 
 class TimeSeriesEvaluation:
     def __init__(self):
@@ -162,12 +179,14 @@ class TimeSeriesEvaluation:
     def add_metric(self, name, function):
         """Add custom evaluation metric"""
         self.metrics[name] = function
+
     def evaluate(self, y_true, y_pred):
         """Evaluate predictions using all metrics"""
         results = {}
         for name, function in self.metrics.items():
             results[name] = function(y_true, y_pred)
         return results
+
     def cross_validate(self, model, cv_splitter, X, y):
         """Perform cross-validation with multiple metrics"""
         cv_results = {name: [] for name in self.metrics}
@@ -183,12 +202,14 @@ class TimeSeriesEvaluation:
                 cv_results[name].append(value)
         return {name: np.mean(scores) for name, scores in cv_results.items()}
 
+
 def check_temporal_dependencies(data, max_lag=10):
     """Check for temporal dependencies in the data"""
     from statsmodels.tsa.stattools import acf
 
     acf_values = acf(data, nlags=max_lag)
     return acf_values
+
 
 def check_data_leakage(train_indices, test_indices, timestamps):
     """Verify no data leakage between train and test sets"""
