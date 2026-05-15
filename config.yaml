@@ -1,8 +1,8 @@
 data:
   source: null
-  date_column: "date"
-  target_column: "value"
-
+  date_column: date
+  target_column: value
+  seed: 42
 cross_validation:
   time_series_cv:
     n_splits: 5
@@ -19,14 +19,11 @@ cross_validation:
     block_size: 50
     n_splits: 5
     enabled: false
-
 output:
-  figures_dir: "images"
-  figure_format: "png"
+  figures_dir: images
+  figure_format: png
   figure_dpi: 100
-
 analysis:
   check_temporal_dependencies: true
   max_lag: 10
   check_data_leakage: true
-

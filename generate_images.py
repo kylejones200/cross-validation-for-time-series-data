@@ -14,7 +14,6 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 
 # Set random seeds
-np.random.seed(42)
 try:
     import tensorflow as tf
     tf.random.set_seed(42)
@@ -66,6 +65,7 @@ logger.info(f"Date range: {ts.index.min()} to {ts.index.max()}")
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error
+np.random.seed(42)
 
 X = ts.index.year.values.reshape(-1, 1)
 y = ts.values
