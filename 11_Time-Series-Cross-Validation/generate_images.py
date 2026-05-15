@@ -3,6 +3,9 @@
 Generated script to create Tufte-style visualizations
 """
 
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader, TensorDataset
 import logging
 
 import signalplot
@@ -17,14 +20,6 @@ import numpy as np
 import pandas as pd
 
 # Set random seeds
-try:
-    import tensorflow as tf
-
-    tf.random.set_seed(42)
-except ImportError:
-    tf = None
-except Exception:
-    tf = None
 
 # Tufte-style configuration
 signalplot.apply(font_family="serif")
@@ -86,8 +81,8 @@ for fold, (train_idx, test_idx) in enumerate(tscv.split(X)):
 
     # Simple model for demonstration
     model = RandomForestRegressor(n_estimators=50, random_state=42)
-    model.fit(X_train, y_train)
-    pred = model.predict(X_test)
+    _train_torch(model, X_train, y_train)
+    pred = _predict_torch(model, X_test)
 
     mae = mean_absolute_error(y_test, pred)
     pd.concat([scores_tscv, mae])
@@ -139,8 +134,8 @@ for fold, (train_idx, test_idx) in enumerate(purged_splits):
     y_train, y_test = y[train_idx], y[test_idx]
 
     model = RandomForestRegressor(n_estimators=50, random_state=42)
-    model.fit(X_train, y_train)
-    pred = model.predict(X_test)
+    _train_torch(model, X_train, y_train)
+    pred = _predict_torch(model, X_test)
 
     mae = mean_absolute_error(y_test, pred)
     pd.concat([scores_purged, mae])
@@ -185,8 +180,8 @@ for fold, (train_idx, test_idx) in enumerate(blocked_splits):
     y_train, y_test = y[train_idx], y[test_idx]
 
     model = RandomForestRegressor(n_estimators=50, random_state=42)
-    model.fit(X_train, y_train)
-    pred = model.predict(X_test)
+    _train_torch(model, X_train, y_train)
+    pred = _predict_torch(model, X_test)
 
     mae = mean_absolute_error(y_test, pred)
     pd.concat([scores_blocked, mae])
@@ -249,8 +244,8 @@ for fold, (train_idx, test_idx) in enumerate(expanding_splits):
     y_train, y_test = y[train_idx], y[test_idx]
 
     model = RandomForestRegressor(n_estimators=50, random_state=42)
-    model.fit(X_train, y_train)
-    pred = model.predict(X_test)
+    _train_torch(model, X_train, y_train)
+    pred = _predict_torch(model, X_test)
 
     mae = mean_absolute_error(y_test, pred)
     pd.concat([scores_expanding, mae])
