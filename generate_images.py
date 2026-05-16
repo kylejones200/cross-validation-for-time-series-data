@@ -72,7 +72,7 @@ X = ts.index.year.values.reshape(-1, 1)
 y = ts.values
 
 # TimeSeriesSplit
-tscv = TimeSeriesSplit(n_splits=5)
+tscv = TimeSeriesSplit(n_splits=config.get('cv', {}).get('n_splits', 5))
 
 scores_tscv = []
 for fold, (train_idx, test_idx) in enumerate(tscv.split(X)):
@@ -85,7 +85,7 @@ for fold, (train_idx, test_idx) in enumerate(tscv.split(X)):
     pred = _predict_torch(model, X_test)
 
     mae = mean_absolute_error(y_test, pred)
-    pd.concat([scores_tscv, mae])
+    scores_tscv.append(mae)
     logger.info(
         f"Fold {fold + 1}: Train size={len(train_idx)}, Test size={len(test_idx)}, MAE={mae:.2f}"
     )
@@ -94,7 +94,7 @@ logger.info(f"\nTimeSeriesSplit average MAE: {np.mean(scores_tscv):.2f}")
 
 
 # Code block 3
-def purged_cv(data, n_splits=5, purge_gap=2):
+def purged_cv(data, n_splits=config.get('cv', {}).get('n_splits', 5), purge_gap=2):
     """
     Purged cross-validation with gap between train and test.
 
@@ -126,7 +126,7 @@ def purged_cv(data, n_splits=5, purge_gap=2):
 
 
 # Apply purged CV
-purged_splits = purged_cv(ts.values, n_splits=5, purge_gap=2)
+purged_splits = purged_cv(ts.values, n_splits=config.get('cv', {}).get('n_splits', 5), purge_gap=2)
 
 scores_purged = []
 for fold, (train_idx, test_idx) in enumerate(purged_splits):
@@ -138,7 +138,7 @@ for fold, (train_idx, test_idx) in enumerate(purged_splits):
     pred = _predict_torch(model, X_test)
 
     mae = mean_absolute_error(y_test, pred)
-    pd.concat([scores_purged, mae])
+    scores_purged.append(mae)
     logger.info(
         f"Fold {fold + 1}: Train size={len(train_idx)}, Test size={len(test_idx)}, MAE={mae:.2f}"
     )
@@ -147,7 +147,7 @@ logger.info(f"\nPurged CV average MAE: {np.mean(scores_purged):.2f}")
 
 
 # Code block 4
-def blocked_cv(data, n_splits=5):
+def blocked_cv(data, n_splits=config.get('cv', {}).get('n_splits', 5)):
     """
     Blocked cross-validation with contiguous blocks.
 
@@ -172,7 +172,7 @@ def blocked_cv(data, n_splits=5):
 
 
 # Apply blocked CV
-blocked_splits = blocked_cv(ts.values, n_splits=5)
+blocked_splits = blocked_cv(ts.values, n_splits=config.get('cv', {}).get('n_splits', 5))
 
 scores_blocked = []
 for fold, (train_idx, test_idx) in enumerate(blocked_splits):
@@ -184,7 +184,7 @@ for fold, (train_idx, test_idx) in enumerate(blocked_splits):
     pred = _predict_torch(model, X_test)
 
     mae = mean_absolute_error(y_test, pred)
-    pd.concat([scores_blocked, mae])
+    scores_blocked.append(mae)
     logger.info(
         f"Fold {fold + 1}: Train size={len(train_idx)}, Test size={len(test_idx)}, MAE={mae:.2f}"
     )
@@ -248,7 +248,7 @@ for fold, (train_idx, test_idx) in enumerate(expanding_splits):
     pred = _predict_torch(model, X_test)
 
     mae = mean_absolute_error(y_test, pred)
-    pd.concat([scores_expanding, mae])
+    scores_expanding.append(mae)
     logger.info(
         f"Fold {fold + 1}: Train size={len(train_idx)}, Test size={len(test_idx)}, MAE={mae:.2f}"
     )

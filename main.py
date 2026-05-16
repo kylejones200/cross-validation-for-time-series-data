@@ -75,7 +75,7 @@ def main():
             from sklearn.model_selection import TimeSeriesSplit
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-        tscv = TimeSeriesSplit(n_splits=3)
+        tscv = TimeSeriesSplit(n_splits=config.get('cv', {}).get('n_splits', 5))
         for train_idx, test_idx in tscv.split(df):
             is_valid = check_data_leakage(train_idx, test_idx, df[date_col])
             logging.info(f"Split valid (no leakage): {is_valid}")

@@ -27,3 +27,7 @@ analysis:
   check_temporal_dependencies: true
   max_lag: 10
   check_data_leakage: true
+cv:
+  n_splits: 5
+  strategy: time_series
+  gap: 0

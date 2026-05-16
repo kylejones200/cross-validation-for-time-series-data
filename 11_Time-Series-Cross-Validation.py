@@ -27,14 +27,14 @@ logger.info(f"Date range: {ts.index.min()} to {ts.index.max()}")
 
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error
-from sklearn.model_selection import TimeSeriesSplit
+from sklearn.model_selection import TimeSeriesSplit, cross_validate
 
 # Prepare data
 X = ts.index.year.values.reshape(-1, 1)
 y = ts.values
 
 # TimeSeriesSplit
-tscv = TimeSeriesSplit(n_splits=5)
+tscv = TimeSeriesSplit(n_splits=config.get('cv', {}).get('n_splits', 5))
 
 scores_tscv = []
 for fold, (train_idx, test_idx) in enumerate(tscv.split(X)):
@@ -47,7 +47,7 @@ for fold, (train_idx, test_idx) in enumerate(tscv.split(X)):
     pred = model.predict(X_test)
 
     mae = mean_absolute_error(y_test, pred)
-    pd.concat([scores_tscv, mae])
+    scores_tscv.append(mae)
     logger.info(
         f"Fold {fold + 1}: Train size={len(train_idx)}, Test size={len(test_idx)}, MAE={mae:.2f}"
     )
@@ -55,7 +55,28 @@ for fold, (train_idx, test_idx) in enumerate(tscv.split(X)):
 logger.info(f"\nTimeSeriesSplit average MAE: {np.mean(scores_tscv):.2f}")
 
 
-def purged_cv(data, n_splits=5, purge_gap=2):
+
+class _PurgedTimeSeriesSplit:
+    """sklearn-compatible purged forward-chaining CV — respects temporal order
+    and drops a gap of samples at the train/test boundary to prevent leakage."""
+    def __init__(self, n_splits: int = 5, gap: int = 1):
+        self.n_splits = n_splits
+        self.gap = gap
+
+    def split(self, X, y=None, groups=None):
+        n = len(X)
+        fold_size = n // (self.n_splits + 1)
+        for i in range(self.n_splits):
+            train_end  = (i + 1) * fold_size - self.gap
+            test_start = (i + 1) * fold_size
+            test_end   = min((i + 2) * fold_size, n)
+            if train_end > 0 and test_start < n:
+                yield np.arange(train_end), np.arange(test_start, test_end)
+
+    def get_n_splits(self, X=None, y=None, groups=None):
+        return self.n_splits
+
+def purged_cv(data, n_splits=config.get('cv', {}).get('n_splits', 5), purge_gap=2):
     """
     Purged cross-validation with gap between train and test.
 
@@ -87,7 +108,7 @@ def purged_cv(data, n_splits=5, purge_gap=2):
 
 
 # Apply purged CV
-purged_splits = purged_cv(ts.values, n_splits=5, purge_gap=2)
+purged_splits = purged_cv(ts.values, n_splits=config.get('cv', {}).get('n_splits', 5), purge_gap=2)
 
 scores_purged = []
 for fold, (train_idx, test_idx) in enumerate(purged_splits):
@@ -99,7 +120,7 @@ for fold, (train_idx, test_idx) in enumerate(purged_splits):
     pred = model.predict(X_test)
 
     mae = mean_absolute_error(y_test, pred)
-    pd.concat([scores_purged, mae])
+    scores_purged.append(mae)
     logger.info(
         f"Fold {fold + 1}: Train size={len(train_idx)}, Test size={len(test_idx)}, MAE={mae:.2f}"
     )
@@ -107,7 +128,7 @@ for fold, (train_idx, test_idx) in enumerate(purged_splits):
 logger.info(f"\nPurged CV average MAE: {np.mean(scores_purged):.2f}")
 
 
-def blocked_cv(data, n_splits=5):
+def blocked_cv(data, n_splits=config.get('cv', {}).get('n_splits', 5)):
     """
     Blocked cross-validation with contiguous blocks.
 
@@ -132,7 +153,7 @@ def blocked_cv(data, n_splits=5):
 
 
 # Apply blocked CV
-blocked_splits = blocked_cv(ts.values, n_splits=5)
+blocked_splits = blocked_cv(ts.values, n_splits=config.get('cv', {}).get('n_splits', 5))
 
 scores_blocked = []
 for fold, (train_idx, test_idx) in enumerate(blocked_splits):
@@ -144,7 +165,7 @@ for fold, (train_idx, test_idx) in enumerate(blocked_splits):
     pred = model.predict(X_test)
 
     mae = mean_absolute_error(y_test, pred)
-    pd.concat([scores_blocked, mae])
+    scores_blocked.append(mae)
     logger.info(
         f"Fold {fold + 1}: Train size={len(train_idx)}, Test size={len(test_idx)}, MAE={mae:.2f}"
     )
@@ -207,7 +228,7 @@ for fold, (train_idx, test_idx) in enumerate(expanding_splits):
     pred = model.predict(X_test)
 
     mae = mean_absolute_error(y_test, pred)
-    pd.concat([scores_expanding, mae])
+    scores_expanding.append(mae)
     logger.info(
         f"Fold {fold + 1}: Train size={len(train_idx)}, Test size={len(test_idx)}, MAE={mae:.2f}"
     )
