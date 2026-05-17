@@ -43,3 +43,11 @@ Edit `config.yaml` to customize:
 - Time series CV preserves temporal ordering (no shuffling).
 - Data leakage checks verify that training data comes before test data.
 - Rolling window CV can be computationally expensive for large datasets.
+
+## Disclaimer
+
+Educational/demo code only. Not financial, safety, or engineering advice. Use at your own risk. Verify results independently before any production or operational use.
+
+## License
+
+MIT — see [LICENSE](LICENSE).

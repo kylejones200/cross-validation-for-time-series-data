@@ -2,10 +2,6 @@
 
 Magics and shell lines are commented out. Run with a normal Python interpreter."""
 
-
-# --- code cell ---
-
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -14,39 +10,10 @@ from sklearn.preprocessing import StandardScaler
 from statsmodels.tsa.arima.model import ARIMA
 
 
-
-# Load and preprocess data
-def load_and_preprocess_data(url):
-    df = pd.read_csv(url)
-    df["date"] = pd.to_datetime(df["date"])
-    df.set_index("date", inplace=True)
-    df = df.resample("h").mean().asfreq("h")
-    df["values"] = df["values"].interpolate()
-
-    scaler = StandardScaler()
-    df["scaled_values"] = scaler.fit_transform(df[["values"]])
-
-    return df, scaler
-
-
-# Forecast with ARIMA
-def forecast_with_confidence(data, order, steps=48, confidence=0.95):
-    model = ARIMA(data, order=order)
-    fitted_model = model.fit()
-
-    forecast_result = fitted_model.get_forecast(steps=steps)
-    forecasts = forecast_result.predicted_mean
-    conf_int = forecast_result.conf_int(alpha=1 - confidence)
-
-    return forecasts, conf_int.iloc[:, 0], conf_int.iloc[:, 1]
-
-
-# Bootstrap-based forecast confidence intervals
 def bootstrap_forecast_ci(
     model_order, data, steps=48, n_bootstraps=100, confidence=0.95
 ):
     forecasts = []
-
     for i in range(n_bootstraps):
         try:
             bootstrap_sample = data.sample(n=len(data), replace=True).sort_index()
@@ -55,19 +22,39 @@ def bootstrap_forecast_ci(
             forecasts.append(fitted_model.forecast(steps=steps).values)
         except Exception as e:
             print(f"Bootstrap iteration {i} failed: {e}")
-
     if not forecasts:
         raise RuntimeError("All bootstrap iterations failed.")
-
     forecasts = np.array(forecasts)
     lower_ci = np.percentile(forecasts, (1 - confidence) / 2 * 100, axis=0)
     upper_ci = np.percentile(forecasts, (1 + confidence) / 2 * 100, axis=0)
     mean_forecast = np.mean(forecasts, axis=0)
+    return (mean_forecast, lower_ci, upper_ci)
 
-    return mean_forecast, lower_ci, upper_ci
+
+def forecast_with_confidence(data, order, steps=48, confidence=0.95):
+    model = ARIMA(data, order=order)
+    fitted_model = model.fit()
+    forecast_result = fitted_model.get_forecast(steps=steps)
+    forecasts = forecast_result.predicted_mean
+    conf_int = forecast_result.conf_int(alpha=1 - confidence)
+    return (forecasts, conf_int.iloc[:, 0], conf_int.iloc[:, 1])
 
 
-# Plot function
+def inverse_transform_and_flatten(scaler, data):
+    return scaler.inverse_transform(np.array(data).reshape(-1, 1)).flatten()
+
+
+def load_and_preprocess_data(url):
+    df = pd.read_csv(url)
+    df["date"] = pd.to_datetime(df["date"])
+    df.set_index("date", inplace=True)
+    df = df.resample("h").mean().asfreq("h")
+    df["values"] = df["values"].interpolate()
+    scaler = StandardScaler()
+    df["scaled_values"] = scaler.fit_transform(df[["values"]])
+    return (df, scaler)
+
+
 def plot_forecast_with_ci(
     historical_data,
     test_data,
@@ -84,13 +71,11 @@ def plot_forecast_with_ci(
         color="blue",
     )
     plt.plot(test_data.index, test_data, label="Actual Test Data", color="green")
-
     forecast_index = test_data.index
     plt.plot(forecast_index, forecasts, "r-", label="Forecast")
     plt.fill_between(
         forecast_index, lower_ci, upper_ci, color="r", alpha=0.2, label="95% CI"
     )
-
     plt.axvline(
         x=test_data.index[0], color="black", linestyle="--", label="Test Data Start"
     )
@@ -104,62 +89,63 @@ def plot_forecast_with_ci(
     plt.show()
 
 
-# Main workflow
-url = "https://raw.githubusercontent.com/kylejones200/time_series/refs/heads/main/ercot_load_data.csv"
-df, scaler = load_and_preprocess_data(url)
+def main() -> None:
+    url = "https://raw.githubusercontent.com/kylejones200/time_series/refs/heads/main/ercot_load_data.csv"
 
-train_data = df["scaled_values"].iloc[:-48]
-test_data = df["scaled_values"].iloc[-48:]
+    df, scaler = load_and_preprocess_data(url)
 
-# Find best ARIMA order
-auto_model = auto_arima(
-    train_data, seasonal=False, trace=True, suppress_warnings=True, stepwise=True
-)
-best_order = auto_model.order
-print(f"Using ARIMA order: {best_order}")
+    train_data = df["scaled_values"].iloc[:-48]
 
-# ARIMA forecast with confidence intervals
-forecasts, lower_ci, upper_ci = forecast_with_confidence(
-    train_data, best_order, steps=48
-)
+    test_data = df["scaled_values"].iloc[-48:]
 
-# Bootstrapped confidence intervals
-boot_forecasts, boot_lower_ci, boot_upper_ci = bootstrap_forecast_ci(
-    best_order, train_data, steps=48, n_bootstraps=50
-)
+    auto_model = auto_arima(
+        train_data, seasonal=False, trace=True, suppress_warnings=True, stepwise=True
+    )
+
+    best_order = auto_model.order
+
+    print(f"Using ARIMA order: {best_order}")
+
+    forecasts, lower_ci, upper_ci = forecast_with_confidence(
+        train_data, best_order, steps=48
+    )
+
+    boot_forecasts, boot_lower_ci, boot_upper_ci = bootstrap_forecast_ci(
+        best_order, train_data, steps=48, n_bootstraps=50
+    )
+
+    forecasts, lower_ci, upper_ci = map(
+        lambda x: inverse_transform_and_flatten(scaler, x),
+        [forecasts, lower_ci, upper_ci],
+    )
+
+    boot_forecasts, boot_lower_ci, boot_upper_ci = map(
+        lambda x: inverse_transform_and_flatten(scaler, x),
+        [boot_forecasts, boot_lower_ci, boot_upper_ci],
+    )
+
+    test_data_original = inverse_transform_and_flatten(scaler, test_data)
+
+    test_data_original_series = pd.Series(test_data_original, index=test_data.index)
+
+    plot_forecast_with_ci(
+        df["values"],
+        test_data_original_series,
+        forecasts,
+        lower_ci,
+        upper_ci,
+        title="ARIMA Forecast with Confidence Intervals",
+    )
+
+    plot_forecast_with_ci(
+        df["values"],
+        test_data_original_series,
+        boot_forecasts,
+        boot_lower_ci,
+        boot_upper_ci,
+        title="Bootstrapped Forecast with Confidence Intervals",
+    )
 
 
-def inverse_transform_and_flatten(scaler, data):
-    return scaler.inverse_transform(np.array(data).reshape(-1, 1)).flatten()
-
-
-forecasts, lower_ci, upper_ci = map(
-    lambda x: inverse_transform_and_flatten(scaler, x), [forecasts, lower_ci, upper_ci]
-)
-boot_forecasts, boot_lower_ci, boot_upper_ci = map(
-    lambda x: inverse_transform_and_flatten(scaler, x),
-    [boot_forecasts, boot_lower_ci, boot_upper_ci],
-)
-test_data_original = inverse_transform_and_flatten(scaler, test_data)
-
-
-# Convert test data back into a Pandas Series
-test_data_original_series = pd.Series(test_data_original, index=test_data.index)
-
-# Plot results
-plot_forecast_with_ci(
-    df["values"],
-    test_data_original_series,
-    forecasts,
-    lower_ci,
-    upper_ci,
-    title="ARIMA Forecast with Confidence Intervals",
-)
-plot_forecast_with_ci(
-    df["values"],
-    test_data_original_series,
-    boot_forecasts,
-    boot_lower_ci,
-    boot_upper_ci,
-    title="Bootstrapped Forecast with Confidence Intervals",
-)
+if __name__ == "__main__":
+    main()
