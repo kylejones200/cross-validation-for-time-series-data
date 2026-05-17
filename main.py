@@ -59,28 +59,28 @@ def main():
     target_col = config['data']['target_column']
     
     if config['cross_validation']['time_series_cv']['enabled']:
-            tscv = TimeSeriesCV(df, date_col, target_col)
-            config['cross_validation']['time_series_cv']['n_splits'],
-            output_dir / 'time_series_cv_splits.png'
-        )
-    
+        n_splits = config['cross_validation']['time_series_cv']['n_splits']
+        TimeSeriesCV(df, date_col, target_col)
+        logging.info(f"Time series CV configured with {n_splits} splits")
+
     if config['analysis']['check_temporal_dependencies']:
-            acf_vals = check_temporal_dependencies(
+        acf_vals = check_temporal_dependencies(
             df[target_col],
-            config['analysis']['max_lag']
+            config['analysis']['max_lag'],
         )
         logging.info(f"ACF values (first 5 lags): {acf_vals[:5]}")
-    
-    if config['analysis']['check_data_leakage']:
-            from sklearn.model_selection import TimeSeriesSplit
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+    if config['analysis']['check_data_leakage']:
+        from sklearn.model_selection import TimeSeriesSplit
+
         tscv = TimeSeriesSplit(n_splits=config.get('cv', {}).get('n_splits', 5))
         for train_idx, test_idx in tscv.split(df):
             is_valid = check_data_leakage(train_idx, test_idx, df[date_col])
             logging.info(f"Split valid (no leakage): {is_valid}")
     
     logging.info(f"\nAnalysis complete. Figures saved to {output_dir}")
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 if __name__ == "__main__":
     main()
