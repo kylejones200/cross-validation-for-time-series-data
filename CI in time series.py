@@ -5,7 +5,6 @@ Magics and shell lines are commented out. Run with a normal Python interpreter."
 
 # --- code cell ---
 
-import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,7 +13,6 @@ from pmdarima import auto_arima
 from sklearn.preprocessing import StandardScaler
 from statsmodels.tsa.arima.model import ARIMA
 
-warnings.filterwarnings("ignore")
 
 
 # Load and preprocess data

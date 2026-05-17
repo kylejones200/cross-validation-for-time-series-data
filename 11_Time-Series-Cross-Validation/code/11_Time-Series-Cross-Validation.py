@@ -47,7 +47,7 @@ for fold, (train_idx, test_idx) in enumerate(tscv.split(X)):
     pred = model.predict(X_test)
 
     mae = mean_absolute_error(y_test, pred)
-    pd.concat([scores_tscv, mae])
+    scores_tscv.append(mae)
     logger.info(
         f"Fold {fold + 1}: Train size={len(train_idx)}, Test size={len(test_idx)}, MAE={mae:.2f}"
     )
@@ -99,7 +99,7 @@ for fold, (train_idx, test_idx) in enumerate(purged_splits):
     pred = model.predict(X_test)
 
     mae = mean_absolute_error(y_test, pred)
-    pd.concat([scores_purged, mae])
+    scores_purged.append(mae)
     logger.info(
         f"Fold {fold + 1}: Train size={len(train_idx)}, Test size={len(test_idx)}, MAE={mae:.2f}"
     )
@@ -144,7 +144,7 @@ for fold, (train_idx, test_idx) in enumerate(blocked_splits):
     pred = model.predict(X_test)
 
     mae = mean_absolute_error(y_test, pred)
-    pd.concat([scores_blocked, mae])
+    scores_blocked.append(mae)
     logger.info(
         f"Fold {fold + 1}: Train size={len(train_idx)}, Test size={len(test_idx)}, MAE={mae:.2f}"
     )
@@ -207,7 +207,7 @@ for fold, (train_idx, test_idx) in enumerate(expanding_splits):
     pred = model.predict(X_test)
 
     mae = mean_absolute_error(y_test, pred)
-    pd.concat([scores_expanding, mae])
+    scores_expanding.append(mae)
     logger.info(
         f"Fold {fold + 1}: Train size={len(train_idx)}, Test size={len(test_idx)}, MAE={mae:.2f}"
     )
