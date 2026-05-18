@@ -91,43 +91,30 @@ def plot_forecast_with_ci(
 
 def main() -> None:
     url = "https://raw.githubusercontent.com/kylejones200/time_series/refs/heads/main/ercot_load_data.csv"
-
     df, scaler = load_and_preprocess_data(url)
-
     train_data = df["scaled_values"].iloc[:-48]
-
     test_data = df["scaled_values"].iloc[-48:]
-
     auto_model = auto_arima(
         train_data, seasonal=False, trace=True, suppress_warnings=True, stepwise=True
     )
-
     best_order = auto_model.order
-
     print(f"Using ARIMA order: {best_order}")
-
     forecasts, lower_ci, upper_ci = forecast_with_confidence(
         train_data, best_order, steps=48
     )
-
     boot_forecasts, boot_lower_ci, boot_upper_ci = bootstrap_forecast_ci(
         best_order, train_data, steps=48, n_bootstraps=50
     )
-
     forecasts, lower_ci, upper_ci = map(
         lambda x: inverse_transform_and_flatten(scaler, x),
         [forecasts, lower_ci, upper_ci],
     )
-
     boot_forecasts, boot_lower_ci, boot_upper_ci = map(
         lambda x: inverse_transform_and_flatten(scaler, x),
         [boot_forecasts, boot_lower_ci, boot_upper_ci],
     )
-
     test_data_original = inverse_transform_and_flatten(scaler, test_data)
-
     test_data_original_series = pd.Series(test_data_original, index=test_data.index)
-
     plot_forecast_with_ci(
         df["values"],
         test_data_original_series,
@@ -136,7 +123,6 @@ def main() -> None:
         upper_ci,
         title="ARIMA Forecast with Confidence Intervals",
     )
-
     plot_forecast_with_ci(
         df["values"],
         test_data_original_series,

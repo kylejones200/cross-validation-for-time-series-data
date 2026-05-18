@@ -3,21 +3,20 @@
 Generated script to create Tufte-style visualizations
 """
 
-import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader, TensorDataset
 import logging
-
-import signalplot
-
-logger = logging.getLogger(__name__)
-
-
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import signalplot
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error
+from sklearn.model_selection import TimeSeriesSplit
+
+logger = logging.getLogger(__name__)
+
+
 
 # Set random seeds
 
@@ -45,7 +44,6 @@ plt.savefig = savefig_tufte
 
 # Code block 1
 
-
 # Load voter turnout data
 data_path = Path("../../timeseries/2025-11-12_us_voter_turnout.csv")
 df = pd.read_csv(data_path)
@@ -60,11 +58,7 @@ ts = df.set_index("Year")["Turnout Rate"]
 logger.info(f"Time series length: {len(ts)}")
 logger.info(f"Date range: {ts.index.min()} to {ts.index.max()}")
 
-
 # Code block 2
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error
-from sklearn.model_selection import TimeSeriesSplit
 
 np.random.seed(42)
 
@@ -78,12 +72,10 @@ scores_tscv = []
 for fold, (train_idx, test_idx) in enumerate(tscv.split(X)):
     X_train, X_test = X[train_idx], X[test_idx]
     y_train, y_test = y[train_idx], y[test_idx]
-
     # Simple model for demonstration
     model = RandomForestRegressor(n_estimators=50, random_state=42)
     _train_torch(model, X_train, y_train)
     pred = _predict_torch(model, X_test)
-
     mae = mean_absolute_error(y_test, pred)
     scores_tscv.append(mae)
     logger.info(
@@ -97,7 +89,6 @@ logger.info(f"\nTimeSeriesSplit average MAE: {np.mean(scores_tscv):.2f}")
 def purged_cv(data, n_splits=5, purge_gap=2):
     """
     Purged cross-validation with gap between train and test.
-
     Parameters:
     -----------
     data : array-like
@@ -109,16 +100,13 @@ def purged_cv(data, n_splits=5, purge_gap=2):
     """
     n = len(data)
     fold_size = n // (n_splits + 1)
-
     splits = []
     for i in range(n_splits):
         test_start = (i + 1) * fold_size
         test_end = min((i + 2) * fold_size, n)
         train_end = test_start - purge_gap
-
         train_idx = np.arange(0, train_end)
         test_idx = np.arange(test_start, test_end)
-
         if len(train_idx) > 0 and len(test_idx) > 0:
             splits.append((train_idx, test_idx))
 
@@ -132,11 +120,9 @@ scores_purged = []
 for fold, (train_idx, test_idx) in enumerate(purged_splits):
     X_train, X_test = X[train_idx], X[test_idx]
     y_train, y_test = y[train_idx], y[test_idx]
-
     model = RandomForestRegressor(n_estimators=50, random_state=42)
     _train_torch(model, X_train, y_train)
     pred = _predict_torch(model, X_test)
-
     mae = mean_absolute_error(y_test, pred)
     scores_purged.append(mae)
     logger.info(
@@ -150,21 +136,17 @@ logger.info(f"\nPurged CV average MAE: {np.mean(scores_purged):.2f}")
 def blocked_cv(data, n_splits=5):
     """
     Blocked cross-validation with contiguous blocks.
-
     Prevents leakage by using non-overlapping blocks.
     """
     n = len(data)
     block_size = n // (n_splits + 1)
-
     splits = []
     for i in range(n_splits):
         test_start = (i + 1) * block_size
         test_end = min((i + 2) * block_size, n)
         train_end = test_start
-
         train_idx = np.arange(0, train_end)
         test_idx = np.arange(test_start, test_end)
-
         if len(train_idx) > 0 and len(test_idx) > 0:
             splits.append((train_idx, test_idx))
 
@@ -178,11 +160,9 @@ scores_blocked = []
 for fold, (train_idx, test_idx) in enumerate(blocked_splits):
     X_train, X_test = X[train_idx], X[test_idx]
     y_train, y_test = y[train_idx], y[test_idx]
-
     model = RandomForestRegressor(n_estimators=50, random_state=42)
     _train_torch(model, X_train, y_train)
     pred = _predict_torch(model, X_test)
-
     mae = mean_absolute_error(y_test, pred)
     scores_blocked.append(mae)
     logger.info(
@@ -196,7 +176,6 @@ logger.info(f"\nBlocked CV average MAE: {np.mean(scores_blocked):.2f}")
 def walk_forward_validation(data, initial_train_size, test_size, expanding=True):
     """
     Walk-forward validation with expanding or rolling windows.
-
     Parameters:
     -----------
     data : array-like
@@ -210,19 +189,14 @@ def walk_forward_validation(data, initial_train_size, test_size, expanding=True)
     """
     n = len(data)
     splits = []
-
     train_start = 0
     train_end = initial_train_size
-
     while train_end + test_size <= n:
         test_start = train_end
         test_end = test_start + test_size
-
         train_idx = np.arange(train_start, train_end)
         test_idx = np.arange(test_start, test_end)
-
         splits.append((train_idx, test_idx))
-
         # Update for next fold
         if expanding:
             train_end += test_size  # Expanding window
@@ -242,11 +216,9 @@ scores_expanding = []
 for fold, (train_idx, test_idx) in enumerate(expanding_splits):
     X_train, X_test = X[train_idx], X[test_idx]
     y_train, y_test = y[train_idx], y[test_idx]
-
     model = RandomForestRegressor(n_estimators=50, random_state=42)
     _train_torch(model, X_train, y_train)
     pred = _predict_torch(model, X_test)
-
     mae = mean_absolute_error(y_test, pred)
     scores_expanding.append(mae)
     logger.info(
@@ -254,7 +226,6 @@ for fold, (train_idx, test_idx) in enumerate(expanding_splits):
     )
 
 logger.info(f"\nWalk-forward (expanding) average MAE: {np.mean(scores_expanding):.2f}")
-
 
 # Code block 6
 # Compile results
@@ -297,10 +268,8 @@ logger.info(f"{'Method':<20} {'Average MAE':<15}")
 for method, mae in results.items():
     logger.info(f"{method:<20} {mae:<15.2f}")
 
-
 # Code block 7
 # Complete code for reproducibility
 # See individual code blocks above for full implementation
-
 
 logger.info("All images generated successfully!")

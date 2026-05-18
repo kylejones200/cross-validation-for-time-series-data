@@ -1,6 +1,5 @@
 # Description: Short example for Cross Validation for Time Series Data.
 
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -215,5 +214,4 @@ def check_data_leakage(train_indices, test_indices, timestamps):
     """Verify no data leakage between train and test sets"""
     train_dates = timestamps[train_indices]
     test_dates = timestamps[test_indices]
-
     return np.all(train_dates < test_dates.min())

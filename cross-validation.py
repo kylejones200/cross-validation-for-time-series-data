@@ -4,7 +4,6 @@ import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.model_selection import ParameterGrid, TimeSeriesSplit
 from statsmodels.tsa.stattools import acf
@@ -18,7 +17,6 @@ class TimeSeriesCV:
         self.data = data
         self.date_column = date_column
         self.target_column = target_column
-
         tscv = TimeSeriesSplit(n_splits=n_splits)
         fig, axs = plt.subplots(n_splits, 1, figsize=(15, 5 * n_splits))
         for idx, (train_idx, test_idx) in enumerate(tscv.split(self.data)):

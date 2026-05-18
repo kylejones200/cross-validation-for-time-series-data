@@ -1,15 +1,19 @@
 import logging
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error
+from sklearn.model_selection import TimeSeriesSplit
 
 logger = logging.getLogger(__name__)
 
 # Extracted code from '11_Time-Series-Cross-Validation.md'
 # Blocks appear in the same order as in the markdown article.
 
-from pathlib import Path
 
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 
 # Load voter turnout data
 data_path = Path("timeseries/2025-11-12_us_voter_turnout.csv")
@@ -25,9 +29,6 @@ ts = df.set_index("Year")["Turnout Rate"]
 logger.info(f"Time series length: {len(ts)}")
 logger.info(f"Date range: {ts.index.min()} to {ts.index.max()}")
 
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error
-from sklearn.model_selection import TimeSeriesSplit
 
 # Prepare data
 X = ts.index.year.values.reshape(-1, 1)
@@ -40,12 +41,10 @@ scores_tscv = []
 for fold, (train_idx, test_idx) in enumerate(tscv.split(X)):
     X_train, X_test = X[train_idx], X[test_idx]
     y_train, y_test = y[train_idx], y[test_idx]
-
     # Simple model for demonstration
     model = RandomForestRegressor(n_estimators=50, random_state=42)
     model.fit(X_train, y_train)
     pred = model.predict(X_test)
-
     mae = mean_absolute_error(y_test, pred)
     scores_tscv.append(mae)
     logger.info(
@@ -58,7 +57,6 @@ logger.info(f"\nTimeSeriesSplit average MAE: {np.mean(scores_tscv):.2f}")
 def purged_cv(data, n_splits=5, purge_gap=2):
     """
     Purged cross-validation with gap between train and test.
-
     Parameters:
     -----------
     data : array-like
@@ -70,16 +68,13 @@ def purged_cv(data, n_splits=5, purge_gap=2):
     """
     n = len(data)
     fold_size = n // (n_splits + 1)
-
     splits = []
     for i in range(n_splits):
         test_start = (i + 1) * fold_size
         test_end = min((i + 2) * fold_size, n)
         train_end = test_start - purge_gap
-
         train_idx = np.arange(0, train_end)
         test_idx = np.arange(test_start, test_end)
-
         if len(train_idx) > 0 and len(test_idx) > 0:
             splits.append((train_idx, test_idx))
 
@@ -93,11 +88,9 @@ scores_purged = []
 for fold, (train_idx, test_idx) in enumerate(purged_splits):
     X_train, X_test = X[train_idx], X[test_idx]
     y_train, y_test = y[train_idx], y[test_idx]
-
     model = RandomForestRegressor(n_estimators=50, random_state=42)
     model.fit(X_train, y_train)
     pred = model.predict(X_test)
-
     mae = mean_absolute_error(y_test, pred)
     scores_purged.append(mae)
     logger.info(
@@ -110,21 +103,17 @@ logger.info(f"\nPurged CV average MAE: {np.mean(scores_purged):.2f}")
 def blocked_cv(data, n_splits=5):
     """
     Blocked cross-validation with contiguous blocks.
-
     Prevents leakage by using non-overlapping blocks.
     """
     n = len(data)
     block_size = n // (n_splits + 1)
-
     splits = []
     for i in range(n_splits):
         test_start = (i + 1) * block_size
         test_end = min((i + 2) * block_size, n)
         train_end = test_start
-
         train_idx = np.arange(0, train_end)
         test_idx = np.arange(test_start, test_end)
-
         if len(train_idx) > 0 and len(test_idx) > 0:
             splits.append((train_idx, test_idx))
 
@@ -138,11 +127,9 @@ scores_blocked = []
 for fold, (train_idx, test_idx) in enumerate(blocked_splits):
     X_train, X_test = X[train_idx], X[test_idx]
     y_train, y_test = y[train_idx], y[test_idx]
-
     model = RandomForestRegressor(n_estimators=50, random_state=42)
     model.fit(X_train, y_train)
     pred = model.predict(X_test)
-
     mae = mean_absolute_error(y_test, pred)
     scores_blocked.append(mae)
     logger.info(
@@ -155,7 +142,6 @@ logger.info(f"\nBlocked CV average MAE: {np.mean(scores_blocked):.2f}")
 def walk_forward_validation(data, initial_train_size, test_size, expanding=True):
     """
     Walk-forward validation with expanding or rolling windows.
-
     Parameters:
     -----------
     data : array-like
@@ -169,19 +155,14 @@ def walk_forward_validation(data, initial_train_size, test_size, expanding=True)
     """
     n = len(data)
     splits = []
-
     train_start = 0
     train_end = initial_train_size
-
     while train_end + test_size <= n:
         test_start = train_end
         test_end = test_start + test_size
-
         train_idx = np.arange(train_start, train_end)
         test_idx = np.arange(test_start, test_end)
-
         splits.append((train_idx, test_idx))
-
         # Update for next fold
         if expanding:
             train_end += test_size  # Expanding window
@@ -201,11 +182,9 @@ scores_expanding = []
 for fold, (train_idx, test_idx) in enumerate(expanding_splits):
     X_train, X_test = X[train_idx], X[test_idx]
     y_train, y_test = y[train_idx], y[test_idx]
-
     model = RandomForestRegressor(n_estimators=50, random_state=42)
     model.fit(X_train, y_train)
     pred = model.predict(X_test)
-
     mae = mean_absolute_error(y_test, pred)
     scores_expanding.append(mae)
     logger.info(

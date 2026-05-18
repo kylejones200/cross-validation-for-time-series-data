@@ -1,6 +1,5 @@
 """Core functions and classes for time series cross-validation."""
 
-import logging
 from typing import Any, Iterator
 
 import matplotlib.pyplot as plt
@@ -9,9 +8,6 @@ import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.model_selection import ParameterGrid, TimeSeriesSplit
 from statsmodels.tsa.stattools import acf
-
-# Configure logging
-logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 
 class TimeSeriesCV:
@@ -27,19 +23,16 @@ class TimeSeriesCV:
         self.data = data
         self.date_column = date_column
         self.target_column = target_column
-
         """Plot time series cross-validation splits."""
         tscv = TimeSeriesSplit(n_splits=n_splits)
         if plot:
             fig, axs = plt.subplots(n_splits, 1, figsize=(15, 5 * n_splits))
-
             if n_splits == 1:
                 axs = [axs]
 
             for idx, (train_idx, test_idx) in enumerate(tscv.split(self.data)):
                 train_data = self.data.iloc[train_idx]
                 test_data = self.data.iloc[test_idx]
-
                 axs[idx].plot(
                     train_data[self.date_column],
                     train_data[self.target_column],
@@ -59,7 +52,6 @@ class TimeSeriesCV:
             plt.suptitle(
                 "Time Series Cross-Validation Splits", fontsize=12, y=0.98, color="0.2"
             )
-
             if output_path:
                 plt.savefig(output_path, dpi=100, bbox_inches="tight")
                 plt.close()
@@ -128,16 +120,13 @@ class NestedTimeSeriesCV:
         inner_cv = TimeSeriesSplit(n_splits=self.n_splits_inner)
         outer_scores = []
         best_params = []
-
         for outer_train_idx, outer_test_idx in outer_cv.split(X):
             X_train_outer = X.iloc[outer_train_idx]
             X_test_outer = X.iloc[outer_test_idx]
             y_train_outer = y.iloc[outer_train_idx]
             y_test_outer = y.iloc[outer_test_idx]
-
             best_score = float("inf")
             best_param = None
-
             for params in ParameterGrid(param_grid):
                 inner_scores = []
                 for inner_train_idx, inner_test_idx in inner_cv.split(X_train_outer):
@@ -145,7 +134,6 @@ class NestedTimeSeriesCV:
                     X_test_inner = X_train_outer.iloc[inner_test_idx]
                     y_train_inner = y_train_outer.iloc[inner_train_idx]
                     y_test_inner = y_train_outer.iloc[inner_test_idx]
-
                     model.set_params(**params)
                     model.fit(X_train_inner, y_train_inner)
                     pred = model.predict(X_test_inner)
@@ -180,7 +168,6 @@ class BlockingTimeSeriesCV:
         n_blocks = n_samples // self.block_size
         indices = np.arange(n_samples)
         blocks = np.array_split(indices[: n_blocks * self.block_size], n_blocks)
-
         for i in range(self.n_splits):
             test_block_idx = i % n_blocks
             test_indices = blocks[test_block_idx]
