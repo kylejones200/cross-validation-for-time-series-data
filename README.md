@@ -2,6 +2,14 @@
 
 This project demonstrates various cross-validation strategies for time series data, including time series splits, rolling windows, nested CV, and blocking methods.
 
+## Business context
+
+Time series cross-validation differs fundamentally from standard cross-validation techniques because it must respect temporal ordering. Simple random splitting can lead to data leakage and over-optimistic performance estimates.
+
+The `TimeSeriesSplit` method is a common way to perform cross-validation in time series. It ensures that the training data always precedes the validation data.
+
+Rolling window cross-validation trains the model on a fixed-size window of data, which shifts forward in time for each iteration.
+
 ## Article
 
 Medium article: [Cross-Validation for Time Series Data](https://medium.com/@kylejones_47003/cross-validation-for-time-series-data-51fd11c38e2b)
