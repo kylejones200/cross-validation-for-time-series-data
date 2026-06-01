@@ -1,0 +1,13 @@
+[package]
+name = "cross_validation_for_time_series_data_bench"
+description = "Standalone Rust benchmark (no Python)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "bench"
+path = "src/main.rs"
+
+[dependencies]
+cross_validation_for_time_series_data_core = { path = "../core" }

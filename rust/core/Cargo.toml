@@ -1,0 +1,9 @@
+[package]
+name = "cross_validation_for_time_series_data_core"
+description = "Rolling-window CV split bounds"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+path = "src/lib.rs"

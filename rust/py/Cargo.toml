@@ -1,0 +1,15 @@
+[package]
+name = "cross_validation_for_time_series_data_rs"
+description = "Python bindings (PyO3) for cross_validation_for_time_series_data_core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "cross_validation_for_time_series_data_rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+cross_validation_for_time_series_data_core = { path = "../core" }
+pyo3 = { version = "0.28", features = ["extension-module"] }
+numpy = "0.28"
